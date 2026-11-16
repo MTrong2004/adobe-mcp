@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Kết nối AI Kit</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main>
+    <h1>Kết nối AI Kit</h1>
+    <p>Cho phép trợ lý đọc tài liệu và cập nhật tên, độ hiển thị, độ mờ của lớp.</p>
+    <label for="token">Token bí mật (bắt buộc)</label>
+    <p id="token-help" class="hint">Nhập cùng token với bridge Python. Token chỉ giữ trong bộ nhớ và được xóa khi ngắt kết nối.</p>
+    <input id="token" name="token" type="password" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" required aria-describedby="token-help status">
+    <div class="actions">
+      <button id="connect" type="button">Kết nối</button>
+      <button id="disconnect" type="button" disabled>Ngắt kết nối</button>
+    </div>
+    <p id="status" role="status" aria-live="polite">Chưa kết nối.</p>
+    <p class="hint">Chỉ mở một panel kết nối. Hãy giữ panel này mở khi sử dụng trợ lý.</p>
+  </main>
+  <script src="main.js"></script>
+</body>
+</html>

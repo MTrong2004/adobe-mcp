@@ -1,0 +1,15 @@
+{
+  "manifestVersion": 5,
+  "id": "ai-kit.photoshop.local-bridge",
+  "name": "AI Kit Photoshop Bridge",
+  "version": "1.0.0",
+  "main": "index.html",
+  "host": { "app": "PS", "minVersion": "25.10.0", "data": { "apiVersion": 2 } },
+  "entrypoints": [{
+    "type": "panel", "id": "bridgePanel", "label": { "default": "AI Kit Bridge" },
+    "minimumSize": { "width": 260, "height": 320 },
+    "preferredDockedSize": { "width": 300, "height": 380 },
+    "preferredFloatingSize": { "width": 340, "height": 380 }
+  }],
+  "requiredPermissions": { "network": { "domains": ["http://127.0.0.1:8766"] } }
+}

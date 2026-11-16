@@ -1,0 +1,12 @@
+/* UXP uses a subset of browser CSS. Keep layout to supported block/flex rules. */
+body { padding: 16px; color: #f3f3f3; background-color: #292929; font-size: 14px; }
+main { display: flex; flex-direction: column; }
+h1 { font-size: 20px; margin-bottom: 12px; }
+p { line-height: 1.5; margin-bottom: 16px; }
+label { font-weight: bold; margin-bottom: 6px; }
+.hint { color: #cccccc; font-size: 12px; }
+input { width: 100%; min-height: 36px; margin-bottom: 14px; }
+.actions { display: flex; flex-wrap: wrap; margin-bottom: 14px; }
+button { min-height: 36px; margin-right: 8px; margin-bottom: 6px; }
+#status { border: 1px solid #777777; border-radius: 4px; padding: 12px; }
+/* Retain host-native focus indication; do not use unsupported modern selectors. */
