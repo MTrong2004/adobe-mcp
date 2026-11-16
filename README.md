@@ -2,16 +2,22 @@
 
 Server MCP điều khiển Photoshop trên Windows qua COM. Thay cho `uvx photoshop-mcp-server` (0.1.14).
 
+## UXP thử nghiệm — 2026-11-17
+
+Đã thêm 4 công cụ `photoshop_uxp_*` dùng cầu nối tới plugin UXP, dựa trên Photoshop DOM và History API chính thức của Adobe. Đây vẫn là MCP tùy chỉnh, không do Adobe phát hành. Các công cụ COM cũ giữ nguyên; không tự động chuyển backend khi lỗi.
+
+Xem [hướng dẫn cài và kiểm thử UXP](UXP-SETUP.md). **UXP mặc định tắt**; 25 công cụ COM/ExtendScript vẫn là mặc định. Chỉ bật `PS_UXP_ENABLED=1` trong môi trường MCP để thử nghiệm UXP có chủ đích; chưa bật trong cấu hình đang dùng và chưa kiểm thử trực tiếp trong Photoshop.
+
 ## Cấu hình MCP (Antigravity / Claude / Codex)
 
 ```json
 "photoshop": {
   "command": "uv",
-  "args": ["run", "--script", "C:/Users/trong/.ai-kit/mcp/photoshop/server.py"]
+  "args": ["run", "--script", "C:/Users/trong/VS Code/photoshop-mcp/server.py"]
 }
 ```
 
-Claude Code: `claude mcp add photoshop -s user -- uv run --script C:/Users/trong/.ai-kit/mcp/photoshop/server.py`
+Claude Code: `claude mcp add photoshop -s user -- uv run --script "C:/Users/trong/VS Code/photoshop-mcp/server.py"`
 
 ## Khác bản gốc
 
@@ -40,7 +46,7 @@ Quy tắc làm việc (gộp script, không lùi History khi người dùng đan
 ## Thử nhanh
 
 ```bash
-uv run --script C:/Users/trong/.ai-kit/mcp/photoshop/server.py
+uv run --script "C:/Users/trong/VS Code/photoshop-mcp/server.py"
 ```
 (chạy rồi đứng chờ là đúng; Ctrl+C để thoát).
 
