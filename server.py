@@ -904,9 +904,10 @@ return /(^|[^\w$.])return\b/.test(c) ? eval("(function(){" + c + "\n})()") : eva
 """, {"code": script}, timeout=timeout_seconds or TIMEOUT)
 
 
-# Additive UXP pilot: no automatic routing/fallback for existing COM operations.
-from uxp_tools import register_uxp_tools
-register_uxp_tools(mcp)
+# UXP is opt-in until host validation; COM remains the default backend.
+if os.environ.get("PS_UXP_ENABLED") == "1":
+    from uxp_tools import register_uxp_tools
+    register_uxp_tools(mcp)
 
 
 def main() -> None:

@@ -63,6 +63,7 @@ class Broker:
         self.result = None
         self.last_poll = 0.0
         self.completed_id = None
+        self.timed_out = False
 
     def status(self):
         with self.condition:
@@ -79,7 +80,7 @@ class Broker:
             job_id = uuid.uuid4().hex
             self.job = {"id": job_id, "operation": operation, "args": args,
                         "expires_at": int((time.time() + timeout) * 1000)}
-            self.claimed, self.result = False, None
+            self.claimed, self.result, self.timed_out = False, None, False
             ready = self.condition.wait_for(lambda: self.result is not None, timeout)
             if ready:
                 result = self.result
@@ -89,6 +90,7 @@ class Broker:
                 self.job = None
                 return {"success": False, "error": "UXP timed out before delivery; request discarded."}
             # Never release/replay a delivered operation whose outcome is unknown.
+            self.timed_out = True
             return {"success": False, "outcome_unknown": True,
                     "error": "UXP result timed out. Do not retry mutation; inspect Photoshop. Bridge blocked until result arrives or restart."}
 
@@ -113,7 +115,7 @@ class Broker:
             if not isinstance(result, dict):
                 raise ValueError("Result must be an object")
             self.completed_id = job_id
-            if time.time() * 1000 > self.job["expires_at"]:
+            if self.timed_out:
                 self.job, self.result = None, None
             else:
                 self.result = result
