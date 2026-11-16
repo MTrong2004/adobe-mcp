@@ -6,3 +6,6 @@ bridge-token.txt
 # ai-kit memory cache
 .agent-memory/*.json
 .agent-memory/*.lock
+
+# ai-kit memory cache
+.ai-consult/
