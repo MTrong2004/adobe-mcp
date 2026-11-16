@@ -1,3 +1,5 @@
 __pycache__/
 *.pyc
 bridge-token.txt
+.gen-state/
+uxp-1a-review.md

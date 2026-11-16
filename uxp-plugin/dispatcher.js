@@ -1,5 +1,6 @@
 'use strict';
 
+const { OPERATIONS: READ_OPERATIONS, createReadInfo } = require('./read-info.js');
 const own = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
 function object(value, label) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error(`${label} must be an object`);
@@ -20,7 +21,14 @@ function validate(job, now) {
   const args = job.args;
   object(args, 'args');
   switch (job.operation) {
+    case 'get_session_info':
+    case 'get_selection_info':
     case 'session_info': keys(args, []); break;
+    case 'get_active_document_info':
+      keys(args, ['include_layers', 'max_depth']);
+      if (own(args, 'include_layers') && typeof args.include_layers !== 'boolean') throw new Error('include_layers must be boolean');
+      if (own(args, 'max_depth') && !Number.isSafeInteger(args.max_depth)) throw new Error('max_depth must be an integer');
+      break;
     case 'document_info':
       keys(args, ['document_id', 'include_layers', 'max_depth']);
       if (own(args, 'document_id')) id(args.document_id, 'document_id');
@@ -74,8 +82,10 @@ function layerTree(layers, maxDepth, constants, depth = 0) {
 }
 function createDispatcher(photoshop, now = Date.now) {
   const { app, core, constants } = photoshop;
+  const readInfo = createReadInfo(photoshop);
   return async job => {
     const args = validate(job, now);
+    if (READ_OPERATIONS.includes(job.operation)) return await readInfo(job.operation, args);
     if (job.operation === 'session_info') {
       const documents = Array.from(app.documents, doc => ({ id: doc.id, name: doc.name }));
       return { success: true, version: app.version, active_document_id: documents.length ? app.activeDocument.id : null, documents };

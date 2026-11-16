@@ -8,6 +8,12 @@ Server MCP điều khiển Photoshop trên Windows qua COM. Thay cho `uvx photos
 
 Xem [hướng dẫn cài và kiểm thử UXP](UXP-SETUP.md). **UXP mặc định tắt**; 25 công cụ COM/ExtendScript vẫn là mặc định. Chỉ bật `PS_UXP_ENABLED=1` trong môi trường MCP để thử nghiệm UXP có chủ đích; chưa bật trong cấu hình đang dùng và chưa kiểm thử trực tiếp trong Photoshop.
 
+### Roadmap 1a: ba tool đọc
+
+Khi `PS_UXP_ENABLED=1`, các tool `photoshop_get_session_info()`, `photoshop_get_active_document_info(include_layers=True, max_depth=-1)` và `photoshop_get_selection_info()` dùng UXP với schema kết quả COM. Tên/tham số 25 tool cũ giữ nguyên; các tool còn lại tiếp tục dùng COM. Không tự fallback khi UXP lỗi. Các tool thử nghiệm `photoshop_uxp_*` vẫn giữ schema riêng để tương thích bản pilot.
+
+Xem [kiểm thử và giới hạn nghiệm thu mục 1a](docs/uxp-1a-validation.md). Mục này chưa được nghiệm thu trên Photoshop thật; chưa chuyển backend mặc định.
+
 ## Cấu hình MCP (Antigravity / Claude / Codex)
 
 ```json
