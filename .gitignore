@@ -2,3 +2,7 @@ __pycache__/
 *.pyc
 *-review.md
 bridge-token.txt
+
+# ai-kit memory cache
+.agent-memory/*.json
+.agent-memory/*.lock

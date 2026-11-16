@@ -1,0 +1,62 @@
+{
+  "cacheDir": ".agent-memory",
+  "memoryDir": "docs/ai/memory/entries",
+  "code": {
+    "include": [
+      "*.{ts,tsx,js,jsx,mjs,cjs,vue,svelte,astro,css,scss}",
+      "**/*.{ts,tsx,js,jsx,mjs,cjs,vue,svelte,astro,css,scss}"
+    ]
+  },
+  "docs": [
+    {
+      "glob": "docs/ai/memory/entries/*.md",
+      "type": "memory"
+    },
+    {
+      "glob": "docs/**/*.md",
+      "type": "doc"
+    },
+    {
+      "glob": "AGENTS.md",
+      "type": "rule"
+    },
+    {
+      "glob": "CLAUDE.md",
+      "type": "rule"
+    },
+    {
+      "glob": "GEMINI.md",
+      "type": "rule"
+    },
+    {
+      "glob": "README.md",
+      "type": "doc"
+    }
+  ],
+  "exclude": [
+    "node_modules/**",
+    ".next/**",
+    "dist/**",
+    "build/**",
+    "out/**",
+    "coverage/**",
+    ".turbo/**",
+    "*.log",
+    "*.min.js"
+  ],
+  "context": {
+    "budget": 1800,
+    "uiLambda": 0.45,
+    "docLambda": 0.55
+  },
+  "superseded": [],
+  "secretKeys": [
+    "token",
+    "secret",
+    "password",
+    "apiKey",
+    "auth",
+    "private_key"
+  ],
+  "synonyms": {}
+}
