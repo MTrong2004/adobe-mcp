@@ -7,7 +7,7 @@ Requires Photoshop 25.10 or later and Adobe UXP Developer Tool. The panel commun
 ## Load for a controlled host test
 
 1. Enable Photoshop **Preferences > Plugins > Enable Developer Mode** and restart if prompted.
-2. In UXP Developer Tool choose **Add Plugin** and select `C:/Users/trong/VS Code/photoshop-mcp/uxp-plugin/manifest.json`, then **Load**.
+2. In UXP Developer Tool choose **Add Plugin** and select `C:/Users/trong/VS Code/adobe-mcp/photoshop/uxp-plugin/manifest.json`, then **Load**.
 3. Open the **AI Kit Bridge** panel from Photoshop's Plugins menu or UXP Developer Tool.
 4. Start the standalone Python bridge using the repository instructions. Enter the same token as `PS_UXP_TOKEN`, or the generated token displayed by the bridge if that variable is unset. Click **Kết nối**.
 5. Keep exactly one panel client connected. **Ngắt kết nối**, panel hide/destroy, or plugin unload stops new polling and clears the token. An operation already executing may finish; its unsent result remains in memory for reconnecting.
@@ -38,7 +38,7 @@ Unknown operations and arguments fail validation. Mutations use `executeAsModal`
 
 ## Verification
 
-From `C:/Users/trong/VS Code/photoshop-mcp/uxp-plugin`:
+From `C:/Users/trong/VS Code/adobe-mcp/photoshop/uxp-plugin`:
 
 ```powershell
 node --test tests/plugin.test.js

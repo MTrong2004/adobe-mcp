@@ -11,7 +11,7 @@ Bản này dùng Photoshop UXP API chính thức nhưng là phần mềm tùy ch
 5. Lần chạy đầu tạo `bridge-token.txt`. Mở file và chép token vào panel, bấm kết nối. Token là bí mật cục bộ: không gửi lên chat, không đưa vào Git. Chỉ kết nối **một panel** vào cầu nối. Panel không lưu token.
 6. **UXP đang tắt mặc định.** Để kiểm thử có chủ đích, thêm `"env": {"PS_UXP_ENABLED": "1"}` vào mục MCP `photoshop`, rồi khởi động lại kết nối MCP. Chỉ giữ thiết lập này sau khi các bước kiểm thử trong Photoshop bên dưới đạt. Hiện chưa sửa cấu hình đang dùng; COM/ExtendScript vẫn là mặc định.
 
-Repo hiện tại: `C:\Users\trong\VS Code\photoshop-mcp`. Lệnh chạy MCP: `uv run --script "C:/Users/trong/VS Code/photoshop-mcp/server.py"`. Script `.cmd` dùng `%~dp0` có dấu ngoặc kép nên hỗ trợ đường dẫn có khoảng trắng.
+Repo hiện tại: `C:\Users\trong\VS Code\adobe-mcp\photoshop`. Lệnh chạy MCP: `uv run --script "C:/Users/trong/VS Code/adobe-mcp/photoshop/server.py"`. Script `.cmd` dùng `%~dp0` có dấu ngoặc kép nên hỗ trợ đường dẫn có khoảng trắng.
 
 Biến môi trường `PS_UXP_TOKEN` tùy chọn thay thế file token; nếu dùng phải đặt cùng giá trị cho cả tiến trình bridge và MCP. Token tối thiểu 32 ký tự. Dừng bridge bằng Ctrl+C. Bridge không tự khởi động cùng Windows.
 
