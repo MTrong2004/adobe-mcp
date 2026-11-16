@@ -91,7 +91,11 @@ function createClient({ dispatch, transport = request, status = () => {}, schedu
           if (receipts.has(job.id)) pending = receipts.get(job.id);
           else {
             try { pending = { id: job.id, result: await dispatch(job) }; }
-            catch (error) { pending = { id: job.id, error: String(error.message || 'Operation failed').slice(0, 1000) }; }
+            catch (error) {
+              // Promise rejections may contain null, undefined, or a string instead of Error.
+              const message = error && typeof error.message === 'string' ? error.message : typeof error === 'string' ? error : '';
+              pending = { id: job.id, error: (message || 'Operation failed').slice(0, 1000) };
+            }
             receipts.set(job.id, pending);
           }
         }
@@ -106,7 +110,7 @@ function createClient({ dispatch, transport = request, status = () => {}, schedu
       }
     } catch (error) {
       if (epoch !== generation) return;
-      if (error.status >= 400 && error.status < 500) {
+      if (error && error.status >= 400 && error.status < 500) {
         disconnect();
         report('Bridge từ chối yêu cầu. Đã dừng; kiểm tra token hoặc bridge vừa khởi động lại.');
       } else report(pending ? 'Mất kết nối. Chỉ thử gửi lại kết quả, không chạy lại thao tác.' : 'Chưa liên lạc được với bridge. Đang thử lại.');

@@ -83,6 +83,36 @@ test('failed result delivery retries only result; repeated ID never reruns', asy
   assert.equal(executed, 1);
   assert.deepEqual(calls, ['/health', '/next', '/result', '/result', '/next', '/result']);
 });
+test('non-Error dispatch failures retain a receipt and never replay the job', async () => {
+  for (const failure of [null, undefined, 'host rejected']) {
+    let executed = 0;
+    const results = [];
+    const { client } = clientFixture(async (path, token, body) => {
+      if (path === '/health') return { success: true, protocol: 1 };
+      if (path === '/next') return { job: job('session_info') };
+      results.push(body);
+      return { success: true };
+    }, async () => { executed++; throw failure; });
+    await client.connect('secret'); await client.tick(); await client.tick();
+    assert.equal(executed, 1);
+    assert.deepEqual(results, [
+      { id: 'j1', error: typeof failure === 'string' ? failure : 'Operation failed' },
+      { id: 'j1', error: typeof failure === 'string' ? failure : 'Operation failed' }
+    ]);
+  }
+});
+test('null transport rejection retries the retained result without replay', async () => {
+  let executed = 0; let posts = 0;
+  const { client } = clientFixture(async path => {
+    if (path === '/health') return { success: true, protocol: 1 };
+    if (path === '/next') return { job: job('session_info') };
+    if (++posts === 1) throw null;
+    return { success: true };
+  }, async () => { executed++; return { success: true }; });
+  await client.connect('secret'); await client.tick(); await client.tick();
+  assert.equal(executed, 1);
+  assert.equal(posts, 2);
+});
 test('polling is sequential and disconnect prevents newly received job execution', async () => {
   let resolveNext; let count = 0;
   const { client } = clientFixture(async path => {
