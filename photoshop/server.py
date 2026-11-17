@@ -339,6 +339,9 @@ async def jsx(title: str, body: str, args: dict[str, Any] | None = None, history
 @mcp.tool()
 async def photoshop_get_session_info() -> dict:
     """Thông tin phiên Photoshop: phiên bản, các file đang mở, file đang chọn. Kích thước tính bằng pixel."""
+    if os.environ.get("PS_UXP_ENABLED") == "1":
+        from uxp_tools import call
+        return await call("get_session_info", {})
     return await jsx("info", r"""
 var docs = [];
 for (var i = 0; i < app.documents.length; i++) docs.push(__docInfo(app.documents[i]));
@@ -357,6 +360,9 @@ async def photoshop_get_active_document_info(include_layers: bool = True, max_de
         include_layers: có trả cây layer không.
         max_depth: độ sâu tối đa trong group (-1 = không giới hạn, 0 = chỉ cấp trên cùng).
     """
+    if os.environ.get("PS_UXP_ENABLED") == "1":
+        from uxp_tools import call
+        return await call("get_active_document_info", {"include_layers": include_layers, "max_depth": max_depth})
     return await jsx("doc", r"""
 var d = __doc(), o = __docInfo(d);
 o.active_layer = __brief(d.activeLayer);
@@ -368,6 +374,9 @@ return o;
 @mcp.tool()
 async def photoshop_get_selection_info() -> dict:
     """Vùng chọn hiện tại (khung bao bằng pixel), nếu có."""
+    if os.environ.get("PS_UXP_ENABLED") == "1":
+        from uxp_tools import call
+        return await call("get_selection_info", {})
     return await jsx("sel", r"""
 var d = __doc();
 try { var b = d.selection.bounds; return { has_selection: true, bounds: { left: __px(b[0]), top: __px(b[1]), right: __px(b[2]), bottom: __px(b[3]),

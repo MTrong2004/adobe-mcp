@@ -11,7 +11,8 @@ from pathlib import Path
 
 TOKEN_FILE = Path(__file__).with_name("bridge-token.txt")
 PORT = 8766
-OPERATIONS = {"session_info", "document_info", "update_layer"}
+OPERATIONS = {"session_info", "document_info", "update_layer",
+              "get_session_info", "get_active_document_info", "get_selection_info"}
 
 
 def get_token(create=False):
@@ -32,15 +33,20 @@ def get_token(create=False):
 def validate(operation, args):
     if operation not in OPERATIONS or not isinstance(args, dict):
         raise ValueError("Unsupported operation or invalid args")
-    allowed = {"session_info": set(), "document_info": {"document_id", "include_layers", "max_depth"},
+    allowed = {"get_session_info": set(), "get_selection_info": set(),
+               "get_active_document_info": {"include_layers", "max_depth"},
+               "session_info": set(), "document_info": {"document_id", "include_layers", "max_depth"},
                "update_layer": {"document_id", "layer_id", "name", "visible", "opacity"}}[operation]
     if set(args) - allowed:
         raise ValueError("Unknown argument")
     for key in ("document_id", "layer_id"):
         if key in args and (type(args[key]) is not int or args[key] <= 0):
             raise ValueError(key + " must be a positive integer")
-    if "max_depth" in args and (type(args["max_depth"]) is not int or not -1 <= args["max_depth"] <= 100):
-        raise ValueError("max_depth must be -1..100")
+    if "max_depth" in args:
+        if type(args["max_depth"]) is not int:
+            raise ValueError("max_depth must be an integer")
+        if operation != "get_active_document_info" and not -1 <= args["max_depth"] <= 100:
+            raise ValueError("max_depth must be -1..100")
     for key in ("include_layers", "visible"):
         if key in args and type(args[key]) is not bool:
             raise ValueError(key + " must be boolean")
