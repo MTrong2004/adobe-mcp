@@ -144,12 +144,17 @@ class PS:
         self._waiters += 1
         try:
             try:
-                await asyncio.wait_for(self._gate.acquire(), max(0, deadline - loop.time()))
+                # Direct acquire preserves external cancellation on Python 3.11.
+                async with asyncio.timeout_at(deadline):
+                    await self._gate.acquire()
             except asyncio.TimeoutError as e:
                 raise RuntimeError("Hết thời gian chờ Photoshop; lệnh chưa được gửi.") from e
         finally:
             self._waiters -= 1
         try:
+            # Deliver cancellation queued at lock handoff before submitting JSX.
+            # Keep this checkpoint inside the release guard so it cannot leak the gate.
+            await asyncio.sleep(0)
             # Recheck after admission: the preceding caller may have timed out.
             if self._pending is not None and not self._pending.done():
                 raise OutcomeUnknownError(

@@ -193,6 +193,25 @@ class RuntimeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.app.DoJavaScript.call_count, 1)
         self.assertEqual(self.ps._waiters, 0)
 
+    async def test_cancellation_at_gate_handoff_never_dispatches(self):
+        await self.ps._gate.acquire()
+        task = asyncio.create_task(self.ps.run("mutation", 1))
+        # Queue acquire even when admission uses a separate task (Python 3.11 wait_for).
+        await asyncio.sleep(0)
+        await asyncio.sleep(0)
+        self.assertEqual(self.ps._waiters, 1)
+        self.ps._gate.release()
+        asyncio.get_running_loop().call_soon(task.cancel)
+        with self.assertRaises(asyncio.CancelledError):
+            await task
+        self.assertTrue(task.cancelled())
+        self.app.DoJavaScript.assert_not_called()
+        self.assertIsNone(self.ps._pending)
+        self.assertFalse(self.ps._gate.locked())
+        self.assertEqual(self.ps._waiters, 0)
+        self.assertEqual(await self.ps.run("inspect", 1), "inspect")
+        self.app.DoJavaScript.assert_called_once_with("inspect")
+
     async def test_disconnect_after_mutation_never_replays_and_next_call_reconnects(self):
         replacement = Mock(Name="Photoshop")
         replacement.DoJavaScript.return_value = "inspected"
