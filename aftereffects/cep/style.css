@@ -1,0 +1,14 @@
+:root { --bg: #252525; --surface: #333333; --text: #f1f1f1; --muted: #bdbdbd; --border: #777777; --accent: #c6bbff; --accent-text: #211b38; --focus: #d8cfff; --space: 12px; }
+* { box-sizing: border-box; }
+body { margin: 0; padding: 16px; background: var(--bg); color: var(--text); font: 13px/1.5 Arial, sans-serif; }
+main { max-width: 480px; margin: auto; }
+h1 { margin: 0 0 var(--space); font-size: 19px; }
+p { color: var(--muted); overflow-wrap: break-word; }
+label { display: block; margin-bottom: 6px; }
+input { display: block; width: 100%; min-height: 44px; padding: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 4px; }
+.actions { display: flex; flex-wrap: wrap; gap: var(--space); }
+button { min-height: 44px; padding: 8px 14px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--text); cursor: pointer; font: inherit; }
+button[type=submit] { background: var(--accent); color: var(--accent-text); }
+button:disabled { opacity: .5; cursor: default; }
+button:focus, input:focus { outline: 2px solid var(--focus); outline-offset: 2px; }
+#status { color: var(--text); min-height: 3em; }
