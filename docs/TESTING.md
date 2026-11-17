@@ -1,6 +1,6 @@
 # Kiểm thử và mức độ sẵn sàng
 
-Lượt xác minh ngày 2026-11-17: aggregate **exit 0**, 42 Python + 39 Node = **81 unit tests PASS**, kèm Premiere schema check và MCP SDK stdio thật cho cả ba app (AE 9 / Premiere 8 / Photoshop 25 tools). Live Premiere **exit 1, disconnected**; AE chưa có host được phát hiện. Xem [báo cáo kết quả thực tế](TEST-REPORT.md) để phân biệt giao thức PASS với live chưa đạt.
+Lượt xác minh ngày 2026-11-17: aggregate **exit 0**, 42 Python + 39 Node = **81 unit tests PASS**, kèm Premiere schema check và MCP SDK stdio thật cho cả ba app (AE 9 / Premiere 8 / Photoshop 25 tools). Live Premiere **exit 1, disconnected**; AE chưa có host được phát hiện. Kiểm tra bổ sung sau aggregate: focused ops **8/8 PASS** (thêm hai regression tests); Photoshop live qua MCP thật **exit 0**, phiên bản **28.0.0**, đọc session thành công. Không chạy lại toàn bộ aggregate cho phần bổ sung này. Xem [báo cáo kết quả thực tế](TEST-REPORT.md) để phân biệt giao thức PASS với live chưa đạt.
 
 ## Lệnh tổng hợp
 
@@ -15,9 +15,10 @@ python "C:/Users/trong/VS Code/adobe-mcp/scripts/adobe.py" test --skip-protocol
 uv run --script "C:/Users/trong/VS Code/adobe-mcp/scripts/mcp_smoke.py"
 uv run --script "C:/Users/trong/VS Code/adobe-mcp/scripts/mcp_smoke.py" --app premiere --live
 uv run --script "C:/Users/trong/VS Code/adobe-mcp/scripts/mcp_smoke.py" --app aftereffects --live
+uv run --script "C:/Users/trong/VS Code/adobe-mcp/scripts/mcp_smoke.py" --app photoshop --live
 ```
 
-MCP smoke dùng SDK `mcp==1.30.0`, khởi động server con bằng uv/stdin/stdout, thực hiện `initialize`, `tools/list`. AE/Premiere gọi `*_session_info` không sửa tài liệu và kiểm tra lỗi có cấu trúc `disconnected` ở chế độ mặc định. Không dùng stub để thay giao thức. Photoshop chỉ initialize/list để tránh tự khởi động Photoshop qua COM. `--live` AE/Premiere bắt buộc tool trả `success: true`; thiếu app/plugin là FAIL, không chuyển thành PASS hay skip. Kết quả không in payload dự án hoặc bearer token.
+MCP smoke dùng SDK `mcp==1.30.0`, khởi động server con bằng uv/stdin/stdout, thực hiện `initialize`, `tools/list`. AE/Premiere gọi `*_session_info` không sửa tài liệu và kiểm tra lỗi có cấu trúc `disconnected` ở chế độ mặc định. Không dùng stub để thay giao thức. Photoshop mặc định chỉ initialize/list để tránh tự khởi động qua COM. Khi chỉ định `--app photoshop --live`, smoke gọi tool thật `photoshop_get_session_info`, có thể khởi động Photoshop, bắt buộc `success: true`, `is_running: true` và phiên bản app hợp lệ; chỉ in phiên bản/các kiểm tra đã qua, không in danh sách tài liệu. Mỗi phiên có timeout tổng 90 giây. `--live` AE/Premiere bắt buộc tool trả `success: true`; thiếu app/plugin là FAIL, không chuyển thành PASS hay skip. Kết quả không in payload dự án hoặc bearer token.
 
 ## Các tầng bằng chứng
 

@@ -41,7 +41,7 @@ Installer chỉ copy panel từ `aftereffects/cep` vào `%APPDATA%/Adobe/CEP/ext
 
 Premiere 25.6+ có API UXP; bản 26.0.1 trên máy đáp ứng yêu cầu phiên bản. **UXP Developer Tool (UDT) chưa được phát hiện; plugin chưa được xác nhận đã Add/Load hoặc kết nối.** Không copy plugin vào thư mục Adobe nội bộ để giả lập cài đặt.
 
-1. Cài [UXP Developer Tool](https://creativecloud.adobe.com/apps/download/uxp-developer-tools) phiên bản 2.2+ qua Creative Cloud. Trong Premiere: Settings > Plugins > Enable developer mode, rồi khởi động lại Premiere.
+1. Cài [UXP Developer Tool](https://creativecloud.adobe.com/apps/download/uxp-developer-tools) phiên bản 2.2+ qua Creative Cloud đã đăng nhập. Lần đầu bật chế độ developer trong UDT cần quyền administrator theo [hướng dẫn Adobe](https://developer.adobe.com/premiere-pro/uxp/plugins/); chưa xác lập quy trình CLI headless được Adobe hỗ trợ cho bước này. Trong Premiere: Settings > Plugins > Enable developer mode, rồi khởi động lại Premiere.
 2. Trong UDT chọn Add Plugin, chọn manifest tuyệt đối `C:/Users/trong/VS Code/adobe-mcp/premiere/uxp-plugin/manifest.json`, chọn Load & Watch. Mở panel từ Window > UXP Plugins.
 3. Chạy bridge, nhập token `.runtime/premiere-token.txt` riêng trong panel và chọn Connect. Mỗi app chỉ một panel đang poll.
 

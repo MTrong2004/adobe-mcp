@@ -38,7 +38,24 @@ Dùng Python MCP SDK `mcp==1.30.0`, SDK client khởi động server subprocess 
 
 Protocol smoke dùng server và SDK thật, không thay bằng stub. PASS disconnected xác nhận cơ chế lỗi hoạt động; không có nghĩa Adobe đã chạy thành công một lệnh.
 
-## Live và triển khai thực tế
+## Live Photoshop bổ sung sau aggregate
+
+```powershell
+python -m unittest discover -s tests -v
+uv run --script scripts/mcp_smoke.py --app photoshop --live
+```
+
+Focused operational tests: **8/8 PASS**, gồm hai regression tests mới cho hợp đồng `success/is_running/version`, phản hồi MCP lỗi và unwrap lỗi do smoke sở hữu mà không lộ nội dung lỗi bên ngoài. Đây là lượt focused bổ sung; không gộp sai thành một lần aggregate 83 tests chưa thực chạy.
+
+Live Photoshop: **exit 0**, kết quả quan sát thực:
+
+```text
+PASS photoshop: SDK initialize (2025-11-25), tools/list (25 tools), photoshop_get_session_info live read-only; version 28.0.0; success/is_running/version checks passed
+```
+
+Server báo Photoshop chưa chạy và khởi động app qua COM, sau đó gọi tool đọc session trên host thật. Smoke có timeout tổng 90 giây, kiểm tra `success: true`, `is_running: true`, phiên bản hợp lệ; không dùng mock để báo live thành công. Không in thông tin tài liệu, tên file, payload session hoặc credential. Không tạo/sửa/lưu/xuất tài liệu. Kết quả chỉ chứng minh đường MCP → COM → đọc session trên Photoshop 28.0.0; chưa chứng minh tính năng ghi hoặc UXP Photoshop.
+
+## Live và triển khai thực tế AE/Premiere
 
 ```powershell
 uv run --script scripts/mcp_smoke.py --app premiere --live

@@ -15,9 +15,28 @@ ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location("adobe_ops", ROOT / "scripts" / "adobe.py")
 ops = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(ops)
+smoke_spec = importlib.util.spec_from_file_location("mcp_smoke_ops", ROOT / "scripts" / "mcp_smoke.py")
+smoke = importlib.util.module_from_spec(smoke_spec)
+smoke_spec.loader.exec_module(smoke)
 
 
 class OperationalTests(unittest.TestCase):
+    def test_photoshop_live_requires_actual_session_contract_and_safe_version(self):
+        valid = {"success": True, "is_running": True, "version": "28.0.0", "documents": [{"name": "DO_NOT_PRINT"}]}
+        self.assertEqual(smoke.photoshop_live_version(valid), "28.0.0")
+        for bad in ({}, {**valid, "success": False}, {**valid, "is_running": False}, {**valid, "version": "28.0 DO_NOT_PRINT"}, {**valid, "version": None}):
+            with self.subTest(bad=bad), self.assertRaises(smoke.LiveSmokeFailure) as caught:
+                smoke.photoshop_live_version(bad)
+            self.assertNotIn("DO_NOT_PRINT", str(caught.exception))
+        with self.assertRaises(smoke.LiveSmokeFailure):
+            smoke.photoshop_live_version(valid, is_error=True)
+
+    def test_only_owned_live_failures_unwrap_from_sdk_exception_groups(self):
+        safe = smoke.LiveSmokeFailure("LIVE FAIL photoshop: invalid app version in session response")
+        group = ExceptionGroup("DO_NOT_PRINT", [ValueError("DO_NOT_PRINT"), ExceptionGroup("private", [safe])])
+        self.assertEqual(smoke.own_live_failure(group), str(safe))
+        self.assertIsNone(smoke.own_live_failure(ExceptionGroup("private", [ValueError("LIVE FAIL photoshop: DO_NOT_PRINT")])))
+
     def test_config_runs_from_an_unrelated_directory_with_space(self):
         with tempfile.TemporaryDirectory(prefix="adobe cwd ") as unrelated:
             result = subprocess.run([sys.executable, str(ROOT / "scripts" / "adobe.py"), "config", "--app", "premiere"], cwd=unrelated, capture_output=True, text=True)
