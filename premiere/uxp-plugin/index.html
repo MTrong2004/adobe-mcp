@@ -1,0 +1,8 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><title>Premiere MCP</title><link rel="stylesheet" href="styles.css"></head>
+<body><main><h1>Kết nối Premiere</h1><p>Nhập mã từ dịch vụ trên máy để cho phép nhận thao tác.</p>
+<label for="token">Mã kết nối</label><input id="token" type="password" autocomplete="off" placeholder="Dán mã kết nối" aria-describedby="token-help">
+<p id="token-help" class="hint">Mã chỉ giữ trong phiên này. Không lưu vào ổ đĩa.</p>
+<div class="buttons"><button id="connect" type="button">Kết nối</button><button id="disconnect" type="button">Dừng nhận</button></div>
+<p id="status" role="status" aria-live="polite">Chưa kết nối.</p><p class="hint">Dừng nhận vẫn giữ kết quả đang chờ xác nhận. Đừng đóng bảng khi đang có thao tác.</p>
+</main><script src="main.js"></script></body></html>

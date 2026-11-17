@@ -3,6 +3,12 @@ __pycache__/
 *-review.md
 bridge-token.txt
 
+# Local bridge authentication, receipts, and generated test media
+.runtime/
+*.local.json
+.ai-consult/
+
+
 # ai-kit memory cache
 .agent-memory/*.json
 .agent-memory/*.lock
