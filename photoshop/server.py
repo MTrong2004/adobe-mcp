@@ -25,6 +25,7 @@ from __future__ import annotations
 import asyncio
 import concurrent.futures as cf
 import json
+import math
 import os
 import sys
 import time
@@ -58,12 +59,26 @@ def _hr(e: BaseException) -> Optional[int]:
     return None
 
 
+class OutcomeUnknownError(RuntimeError):
+    """JSX may have changed Photoshop; callers must inspect state before retrying."""
+
+
 class PS:
-    """Giữ kết nối COM trong một luồng riêng; tự nối lại, đợi khi bận, giới hạn thời gian."""
+    """One COM apartment, one active script, and a bounded admission queue.
+
+    Timeouts include queue wait. A running COM call cannot be cancelled: retain its
+    worker and reject dispatch until it finishes, even if its caller has left.
+    """
+
+    MAX_WAITERS = 8
 
     def __init__(self) -> None:
         self._app = None
         self._pool = self._new_pool()
+        self._gate = asyncio.Lock()
+        self._waiters = 0
+        self._pending: cf.Future | None = None
+        self._unknown = False
 
     @staticmethod
     def _new_pool() -> cf.ThreadPoolExecutor:
@@ -92,37 +107,76 @@ class PS:
     def _run_sync(self, code: str) -> str:
         deadline = time.monotonic() + 15
         delay = 0.25
-        reconnected = False
         while True:
+            # Connection/probe failures happen before dispatch and cannot replay JSX.
+            app = self._get_app()
             try:
-                return self._get_app().DoJavaScript(code)
+                return app.DoJavaScript(code)
             except Exception as e:  # noqa: BLE001
                 hr = _hr(e)
+                # RPC_E_CALL_REJECTED / RETRYLATER mean dispatch was rejected.
                 if hr in BUSY and time.monotonic() < deadline:
                     time.sleep(delay)
                     delay = min(delay * 2, 2)
                     continue
-                if hr in DISCONNECTED and not reconnected:
-                    self._app = None
-                    reconnected = True
-                    continue
+                if hr in DISCONNECTED:
+                    self._app = None  # reconnect only for a subsequent new request
+                    raise OutcomeUnknownError(
+                        "Mất kết nối sau khi gửi JSX; kết quả chưa xác định. "
+                        "Không tự chạy lại lệnh; kiểm tra trạng thái Photoshop trước."
+                    ) from e
                 if hr in BUSY:
                     raise RuntimeError("Photoshop đang bận (có hộp thoại đang mở hoặc đang sửa chữ?). Đóng hộp thoại rồi thử lại.") from e
                 raise
 
     async def run(self, code: str, timeout: float = TIMEOUT) -> str:
+        if not math.isfinite(timeout) or timeout <= 0:
+            raise ValueError("timeout phải là số giây hữu hạn lớn hơn 0")
         loop = asyncio.get_running_loop()
-        fut = loop.run_in_executor(self._pool, self._run_sync, code)
-        try:
-            return await asyncio.wait_for(fut, timeout)
-        except asyncio.TimeoutError:
-            # Luồng cũ đang kẹt chờ Photoshop: bỏ nó, tạo luồng + kết nối mới cho lệnh sau.
-            self._pool.shutdown(wait=False, cancel_futures=True)
-            self._pool = self._new_pool()
-            self._app = None
-            raise RuntimeError(
-                f"Photoshop không trả lời sau {timeout:.0f}s (có thể đang mở hộp thoại hoặc lệnh quá nặng)."
+        deadline = loop.time() + timeout
+        if self._unknown and self._pending is not None and not self._pending.done():
+            raise OutcomeUnknownError(
+                "Lệnh trước vẫn đang chạy, kết quả chưa xác định. "
+                "Đợi Photoshop hoàn tất; không tự chạy lại lệnh."
             )
+        if self._waiters + int(self._gate.locked()) >= self.MAX_WAITERS + 1:
+            raise RuntimeError("Hàng đợi Photoshop đã đầy; lệnh chưa được gửi.")
+        self._waiters += 1
+        try:
+            try:
+                await asyncio.wait_for(self._gate.acquire(), max(0, deadline - loop.time()))
+            except asyncio.TimeoutError as e:
+                raise RuntimeError("Hết thời gian chờ Photoshop; lệnh chưa được gửi.") from e
+        finally:
+            self._waiters -= 1
+        try:
+            # Recheck after admission: the preceding caller may have timed out.
+            if self._pending is not None and not self._pending.done():
+                raise OutcomeUnknownError(
+                    "Lệnh trước vẫn đang chạy, kết quả chưa xác định. "
+                    "Đợi Photoshop hoàn tất; không tự chạy lại lệnh."
+                )
+            remaining = deadline - loop.time()
+            if remaining <= 0:
+                raise RuntimeError("Hết thời gian chờ Photoshop; lệnh chưa được gửi.")
+            self._unknown = False
+            self._pending = self._pool.submit(self._run_sync, code)
+            fut = asyncio.wrap_future(self._pending, loop=loop)
+            # Retrieve late exceptions even when the original awaiter has left.
+            fut.add_done_callback(lambda done: None if done.cancelled() else done.exception())
+            try:
+                return await asyncio.wait_for(asyncio.shield(fut), remaining)
+            except asyncio.TimeoutError as e:
+                self._unknown = True
+                raise OutcomeUnknownError(
+                    f"Photoshop không trả lời sau {timeout:.0f}s; kết quả chưa xác định. "
+                    "Lệnh có thể vẫn đang chạy. Không tự chạy lại; kiểm tra trạng thái khi hoàn tất."
+                ) from e
+            except asyncio.CancelledError:
+                self._unknown = True
+                raise
+        finally:
+            self._gate.release()
 
 
 INSTRUCTIONS = """\
@@ -237,8 +291,8 @@ XEM ẢNH NHANH
 23. File lớn (> 4000px): xem toàn cảnh bằng photoshop_export_image max_size=1600-2000; xem chi tiết 100% bằng region=[l,t,r,b]
     (không xuất cả ảnh rồi tự cắt). Không dùng photoshop_save_document để lấy ảnh xem trước.
 24. Vật đã nằm trong PSD (Smart Object) thì làm việc trên layer đó; không quét ổ đĩa tìm file gốc.
-25. Mô tả công cụ + hướng dẫn này là đủ; không đọc mã nguồn server. Lỗi quá giờ: kiểm tra Photoshop còn bận (get_session_info)
-    rồi thử lại MỘT lần với ảnh nhỏ hơn, đừng dò code.
+25. Mô tả công cụ + hướng dẫn này là đủ; không đọc mã nguồn server. Lỗi quá giờ / outcome_unknown: lệnh có thể vẫn chạy.
+    Không tự chạy lại lệnh sửa; đợi hoàn tất rồi đọc trạng thái Photoshop để xác định thay đổi đã xảy ra trước khi làm tiếp.
 27. GỌI ÍT, NHANH: mỗi lần gọi công cụ tốn thời gian chủ dự án chờ. Trước khi gọi, viết sẵn cả chuỗi việc vào 1 script
     (đặt layer + mask + đổi blend + xuất ảnh kiểm tra trong CÙNG một execute_jsx). Không gọi get_active_document_info lặp lại
     (gọi 1 lần đầu, nhớ id). Không xuất cả ảnh 7776px để xem 1 góc: crop bằng duplicate+crop trong script. Không đọc lại file
@@ -260,6 +314,8 @@ async def jsx(title: str, body: str, args: dict[str, Any] | None = None, history
     )
     try:
         raw = await ps.run(code, timeout)
+    except OutcomeUnknownError as e:
+        return {"success": False, "error": str(e), "outcome_unknown": True}
     except Exception as e:  # noqa: BLE001
         return {"success": False, "error": str(e)}
     try:
